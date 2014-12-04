@@ -15,6 +15,7 @@ var drawViz = function(error, data){
 	var fbVizObj = new fbViz();
 	console.log(data);
 	var dataTmp = {};
+	var formatDateTime = d3.time.format('%m/%d/%Y');
 	data.forEach(function(d) {
 		// body...
 		if(!(d["user"] in dataTmp)){
@@ -36,4 +37,4 @@ var drawViz = function(error, data){
 	fObj = fbVizObj;
 };
 
-d3.json(filename, drawViz);
+d3.tsv(filename, drawViz);
