@@ -20,11 +20,13 @@ var fbViz = function () {
 		var extent=$_THIS.brush.extent();//added
 		$_THIS.x.domain($_THIS.brush.empty() ? $_SLIDER.x.domain() : $_THIS.brush.extent());
 		//console.log($_THIS.x.domain());
-		
-		points.classed("selected", function(d) {//added
-		    is_brushed = extent[0] <= d.created_at && d.created_at <= extent[1];//added
-		    return is_brushed;//added
-		});//added
+		//console.log("1");
+		if(!$_THIS.brush.empty()){
+			points.classed("selected", function(d) {//added
+			    is_brushed = extent[0] <= d.created_at && d.created_at <= extent[1];//added
+			    return is_brushed;//added
+			});//added
+		}
 		
 		//$_THIS.x.domain(brush.empty() ? $_SLIDER.x.domain() : brush.extent());
 		if($_THIS.brush.empty()){
@@ -39,8 +41,8 @@ var fbViz = function () {
 		//$_THIS.focus.select(".x.axis").call($_THIS.xAxis);
 		$_THIS.posts.filter(function (d) {
 			//console.log(d);
-			/*console.log($_THIS.brush.extent());
-			console.log("X Domain", $_THIS.x.domain());*/
+			//console.log($_THIS.brush.extent());
+			//console.log("X Domain", $_THIS.x.domain());
 			return (d.created_at >= $_THIS.x.domain()[0]
 				 && d.created_at <= $_THIS.x.domain()[1]) ? true : false;
 		}).classed("hideElem", false);
@@ -53,7 +55,8 @@ var fbViz = function () {
 	}
 
 	function brushend() {//function added
-	  $_THIS.x.domain($_THIS.brush.extent());
+	  $_THIS.x.domain($_THIS.brush.empty() ? $_SLIDER.x.domain() : $_THIS.brush.extent());
+	  //$_THIS.x.domain($_THIS.brush.extent());
 	  transition_data();
 	  reset_axis();
 	
@@ -62,7 +65,8 @@ var fbViz = function () {
 	}//function added
 	function transition_data() {//function added
 		//console.log($_THIS.data);
-		console.log(d3.selectAll("svg"));
+		//console.log(d3.selectAll("svg"));
+		//console.log(d);
 	  d3.selectAll("circle")
 	    .data($_THIS.data)
 	    .transition()
@@ -73,6 +77,40 @@ var fbViz = function () {
 	    .duration(500)
 	    .attr('d', function (d) {
 			return 'M ' + $_THIS.x(new Date(d['created_time'])) +' '+ (yy-side) + ' L '+($_THIS.x(new Date(d['created_time']))-side/2*Math.sqrt(2))+ ' ' + (yy+side/2)+' L '+($_THIS.x(new Date(d['created_time']))+side/2*Math.sqrt(2)) +' '+ (yy+side/2)+' L '+($_THIS.x(new Date(d['created_time']))) +' '+ (yy-side);
+		});
+		function genLinks_brush(d) {
+			var links = [];
+			for (var j = 0; j < d.comments_arr.length; j++) {
+				var t = Object();
+				t.source = {
+					x : $_THIS.x(new Date(d['created_time'])),
+					y : $_THIS.y(d.like_size)
+				};
+				t.target = {
+					x : $_THIS.x(new Date(d.comments_arr[j]['created_time'])),
+					y : $_THIS.comment_y
+				};
+				links.push(t);
+			};
+			return links;
+		}
+	  $_THIS.posts.selectAll(".edge")
+		.data(function (d) {
+			return genLinks_brush(d);
+		})
+		.transition()
+	    .duration(500)
+		.attr('x1', function (d) {
+			return d.source.x;
+		})
+		.attr('y1', function (d) {
+			return d.source.y;
+		})
+		.attr('x2', function (d) {
+			return d.target.x;
+		})
+		.attr('y2', function (d) {
+			return d.target.y;
 		});
 	}//function added
 	
@@ -305,7 +343,7 @@ var fbViz = function () {
 		.call(this.brush)
 		//.call(brush)
 		.selectAll("rect")
-		.attr("y", -2 * $_SLIDER.margin.bottom - $_SLIDER.height)
+		.attr("y", -2 * $_SLIDER.margin.bottom - $_SLIDER.height+5)
 		.attr("height", 2 * $_SLIDER.height + 2 * $_SLIDER.margin.bottom);
 
 		this.focus.call(this.tip);
@@ -496,7 +534,7 @@ var fbViz = function () {
 		.attr('d', function (d) {
 			return 'M ' + $_THIS.x(new Date(d['created_time'])) +' '+ (yy-side) + ' L '+($_THIS.x(new Date(d['created_time']))-side/2*Math.sqrt(2))+ ' ' + (yy+side/2)+' L '+($_THIS.x(new Date(d['created_time']))+side/2*Math.sqrt(2)) +' '+ (yy+side/2)+' L '+($_THIS.x(new Date(d['created_time']))) +' '+ (yy-side);
 		})
-		.attr('fill', "red")   //sentiment
+		.attr('fill', "rgba(255,51,51,0.7)")   //sentiment
 		.classed('comment', true)
 		.on('mouseover', this.tip.show)
 		.on('mouseout', this.tip.hide)
