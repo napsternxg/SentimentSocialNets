@@ -69,31 +69,6 @@ $(function () {
     });
 });
 
-function transition_data() {//function added
-		//console.log($_THIS.data);
-		//console.log(d3.selectAll("svg"));
-	  var yy=$_THIS.comment_y;	
-	  var cy=Math.random()*30;//added
-	  var side=10;//added
-	  d3.selectAll("circle")
-	    .data($_THIS.data)
-	    .transition()
-	    .duration(500)
-	    .attr("cx", function(d) {return $_THIS.x(d.created_at); });
-	  d3.selectAll(".triangle")
-	    .transition()
-	    .duration(500)
-	    .attr('d', function (d) {
-			return 'M ' + $_THIS.x(new Date(d['created_time'])) +' '+ (yy-side) + ' L '+($_THIS.x(new Date(d['created_time']))-side/2*Math.sqrt(2))+ ' ' + (yy+side/2)+' L '+($_THIS.x(new Date(d['created_time']))+side/2*Math.sqrt(2)) +' '+ (yy+side/2)+' L '+($_THIS.x(new Date(d['created_time']))) +' '+ (yy-side);
-		});
-	}//function added
-	
-	function reset_axis() {//function added
-	  d3.select("svg").transition().duration(500)
-	   .select(".x.axis")
-	   .call($_THIS.xAxis);
-	}//function added
-
 function changeUser(uid) {
     // body...
 
