@@ -14,6 +14,13 @@ var dataOptions = function(){
 	this.children_label_text = "Tweets";
 	this.label_class = {"positive": "positive", "negative": "negative", "neutral": "neutral"};
 	this.time_formatter = d3.time.format('%m/%d/%Y %H:%M:%S');
+	this.f=new Array(6);
+	this.f[0] = "length";//c_emo	c_hash	m_mention
+	this.f[1] = "c_emo";
+	this.f[2] = "c_hash";
+	this.f[3] = "c_mention";
+	this.f[4] = "c_url";
+	this.f[5] = "c_quote";
 }
 
 var fbViz = function () {
@@ -23,7 +30,11 @@ var fbViz = function () {
 	this.dataOptions = new dataOptions();
 	$_SLIDER = this.slider;
 	$_THIS = this; // Copied the object instance to variable so as to use in nested function calls.
-
+	var yy;//added 
+    var cy;//added
+    var side=10;//added
+    var color=["rgba(255,51,51,0.7)","rgba(0,204,0,0.7)"];//added /12/07
+    
 	this.setCSSProps = function (cssObj) {
 		this.margin = cssObj.margin;
 		this.width = cssObj.width;
@@ -34,32 +45,98 @@ var fbViz = function () {
 	};
 
 	function brushed() {
+		var extent=$_THIS.brush.extent();//added
 		$_THIS.x.domain($_THIS.brush.empty() ? $_SLIDER.x.domain() : $_THIS.brush.extent());
+		/*if(!$_THIS.brush.empty()){
+			points.classed("selected", function(d) {//added
+			    is_brushed = extent[0] <= d.created_at && d.created_at <= extent[1];//added
+			    return is_brushed;//added
+			});//added
+		}*/
+		transition_data();//12/07
+	    reset_axis();//12/07
 		if($_THIS.brush.empty()){
 			$("#reset-brush").prop("disabled", true);
-			//console.log($_THIS.x.domain());
 		}
 		else{
 			$("#reset-brush").prop("disabled", false);
-			//console.log($_THIS.x.domain());
 		}
-		//$_THIS.focus.select(".x.axis").call($_THIS.xAxis);
 		$_THIS.posts.filter(function (d) {
-			//console.log(d);
-			/*console.log($_THIS.brush.extent());
-			console.log("X Domain", $_THIS.x.domain());*/
 			return (d.created_at >= $_THIS.x.domain()[0]
 				 && d.created_at <= $_THIS.x.domain()[1]) ? true : false;
 		}).classed("hideElem", false);
 		$_THIS.posts.filter(function (d) {
-			//console.log(d);
-			//console.log($_THIS.brush.extent());
 			return (d.created_at < $_THIS.x.domain()[0]
 				 || d.created_at > $_THIS.x.domain()[1]) ? true : false;
 		}).classed("hideElem", true);
 
 	}
-
+	function brushend() {//function added
+	  $_THIS.x.domain($_THIS.brush.empty() ? $_SLIDER.x.domain() : $_THIS.brush.extent());
+	  transition_data();
+	  reset_axis();
+		
+	  points.classed("selected", false);
+	  d3.select(".x brush").call($_THIS.brush.clear());
+	}//function added
+	function transition_data() {//function added
+	  d3.selectAll("circle")
+	    //.data($_THIS.dataOptions.comments_arr)
+	    .transition()
+	    .duration(100)
+	    .attr("cx", function(d) {return $_THIS.x(d.created_at); });
+	  d3.selectAll(".triangle")
+	    .transition()
+	    .duration(100)
+	    .attr('d', function (d) {
+			side=3*$_THIS.commentRadius(c_link_size(d));
+			yy=$_THIS.comment_y_scale(d[$_THIS.dataOptions.children_height]);
+			return 'M ' + $_THIS.x(d[$_THIS.dataOptions.children_time]) +' '+ (yy-side) + ' L '+(($_THIS.x(d[$_THIS.dataOptions.children_time]))-side/2*Math.sqrt(2))+ ' ' + (yy+side/2)+' L '+(($_THIS.x(d[$_THIS.dataOptions.children_time]))+side/2*Math.sqrt(2)) +' '+ (yy+side/2)+' L '+($_THIS.x(d[$_THIS.dataOptions.children_time])) +' '+ (yy-side);
+		
+		});
+		function genLinks_brush(d) {
+			var links = [];
+			for (var j = 0; j < d.comments_arr.length; j++) {
+				var t = Object();
+				t.source = {
+					x : $_THIS.x(d[$_THIS.dataOptions.user_time]),
+					y : $_THIS.y(d.like_size)
+				};
+				t.target = {
+					x : $_THIS.x(d.comments_arr[j][$_THIS.dataOptions.children_time]),
+					//y : $_THIS.comment_y
+					y: $_THIS.comment_y_scale(d.comments_arr[j][$_THIS.dataOptions.children_height])
+				};
+				links.push(t);
+			};
+			return links;
+		}
+	  $_THIS.posts.selectAll(".edge")
+		.data(function (d) {
+			return genLinks_brush(d);
+		})
+		.transition()
+	    .duration(100)
+		.attr('x1', function (d) {
+			return d.source.x;
+		})
+		.attr('y1', function (d) {
+			return d.source.y;
+		})
+		.attr('x2', function (d) {
+			return d.target.x;
+		})
+		.attr('y2', function (d) {
+			return d.target.y;
+		});
+	}//function added
+	
+	function reset_axis() {//function added
+	  d3.select("svg").transition().duration(100)
+	   .select(".x.axis")
+	   .call($_THIS.xAxis);
+	}//function added
+	
 	this.sliderProps = function (cssObj) {
 		this.slider.margin = cssObj.margin;
 		this.slider.height = cssObj.height;
@@ -69,7 +146,8 @@ var fbViz = function () {
 
 		this.brush = d3.svg.brush()
 			.x(this.slider.x)
-			.on("brush", brushed);
+			.on("brush", brushed)
+			//.on("brushend", brushend);
 
 		this.slider.line = d3.svg.line()
 			.interpolate("step")
@@ -278,7 +356,7 @@ var fbViz = function () {
 		.attr("class", "x brush")
 		.call(this.brush)
 		.selectAll("rect")
-		.attr("y", -2 * $_SLIDER.margin.bottom - $_SLIDER.height)
+		.attr("y", -2 * $_SLIDER.margin.bottom - $_SLIDER.height+8)
 		.attr("height", 2 * $_SLIDER.height + 2 * $_SLIDER.margin.bottom);
 
 		this.focus.call(this.tip);
@@ -450,16 +528,35 @@ var fbViz = function () {
 
 		console.log("Posts", this.posts);
 
+		yy=this.comment_y;//added
+    	cy=Math.random()*30;//added
+		side=10;//added
+	
 		this.posts.selectAll('circle.comment') // Adds a dot per comment
 		.data(function (d) {
 			return d.comments_arr;
 		})
 		.enter()
-		.append('circle')
+		.append('path')
+		.attr('class', "triangle")
 		.attr("data-legend", function (d) {
 			return "Comment " + commentClass(d)
 		})
-		.attr('cx', function (d) {
+		.attr('d', function (d) {
+			//height=yy//12/07
+			side=3*$_THIS.commentRadius(c_link_size(d));
+			yy=$_THIS.comment_y_scale(d[$_THIS.dataOptions.children_height]);
+			return 'M ' + $_THIS.x(d[$_THIS.dataOptions.children_time]) +' '+ (yy-side) + ' L '+(($_THIS.x(d[$_THIS.dataOptions.children_time]))-side/2*Math.sqrt(2))+ ' ' + (yy+side/2)+' L '+(($_THIS.x(d[$_THIS.dataOptions.children_time]))+side/2*Math.sqrt(2)) +' '+ (yy+side/2)+' L '+($_THIS.x(d[$_THIS.dataOptions.children_time])) +' '+ (yy-side);
+		})
+		.attr('fill', function(d){
+			if($_THIS.dataOptions.label_class[d[$_THIS.dataOptions.children_label]]=="positive"){
+				return "rgba(0,153,76,0.7)";
+			}
+			else if($_THIS.dataOptions.label_class[d[$_THIS.dataOptions.children_label]]=="negative")
+				return "rgba(255,28,28,0.7)";
+			else return "rgba(0,28,255,0.7)";
+		})   //color=sentiment, color[0]=neg, color[1]=pos;//12/07
+		/*.attr('cx', function (d) {
 			return $_THIS.x(d[$_THIS.dataOptions.children_time]);
 		})
 		//.attr('cy', this.comment_y)
@@ -469,15 +566,113 @@ var fbViz = function () {
 		.attr('r', function (d) {
 			return $_THIS.commentRadius(c_link_size(d));
 		})
-		.attr('class', commentClass)
+		.attr('class', commentClass)*/
 		.classed('comment', true)
 		.on('mouseover', this.tip.show)
 		.on('mouseout', this.tip.hide)
-		.on('click', showDebug /*function(d){ console.log(d); d3.select('#debug').text(JSON.stringify(d,undefined, 2));}*/
-		)
+		//.on('click', showDebug /*function(d){ console.log(d); d3.select('#debug').text(JSON.stringify(d,undefined, 2));}*/
+		//)
 		/*.append("svg:title")
 		.text(function(d) { return d['from']['name']+": "+d['message']; })*/
-	;
+	    //;
+	    .on('click', function(d){
+			//click on the triangle and show a rect for bar chart of features
+			d3.select("#closed").remove(); 
+	  		d3.selectAll(".bars").remove(); 
+	  		d3.selectAll(".text for bars").remove(); 
+	  		d3.selectAll(".closed").remove(); 
+			d3.select("#feature").remove();
+			var mouse_click=d3.mouse(this);
+			d3.selectAll(".triangle")
+			  .attr("stroke-width",0);
+			d3.select(this).attr("stroke","black").attr("stroke-width",2);
+			d3.select("#graphs").select("svg") //show features
+				.append('rect')
+				.attr("id","feature")
+				.attr('x', mouse_click[0]-130)
+				.attr('y', mouse_click[1]-220)
+				.attr('width', 360)
+				.attr('height', 200)
+				.attr('fill', "rgb(240,240,240)");
+			d3.select("#graphs").select("svg") //show features
+				.append('rect')
+				.attr("class","close")
+				.attr("id","closed")
+				.attr('x', mouse_click[0]+215)
+				.attr('y', mouse_click[1]-220.5)
+				.attr('width', 15)
+				.attr('height', 15)
+				.attr('fill', "rgba(255,51,51,0.7)")
+				.on("mouseover", function() {//12/07 start
+			   		d3.select("#closed").attr("fill","red");      
+			    })
+			    .on("mouseout", function() {
+			   		d3.select("#closed").attr("fill","rgba(255,51,51,0.7)");      
+			    })//12/07 end
+				.on("click",function(){//feature histogram
+					d3.selectAll(".triangle")
+			  		  .attr("stroke-width",0);
+			  		d3.select("#closed").remove(); 
+			  		d3.selectAll(".bars").remove(); 
+			  		d3.selectAll(".text for bars").remove(); 
+			  		d3.selectAll(".closed").remove(); 
+					d3.select("#feature").remove();
+				});
+			//draw bar chart start /12/07
+			for(var n=0;n<6;n++){
+				d3.select("#graphs").select("svg") //bar chart
+				    .append('rect')
+				    .attr('class',"bars")
+					.attr('x', mouse_click[0]-90+n*50)
+					.attr('y', function(){
+						var num;
+						if(!d[$_THIS.dataOptions.f[n]]) num=0.1;
+						else num=d[$_THIS.dataOptions.f[n]];
+						return mouse_click[1]-60-20*num;
+						})
+					.attr('width', 30)
+					.attr('height', function(){
+						//var ff=($_THIS.dataOptions.f.toString)+n;
+						console.log("ff"+d[$_THIS.dataOptions.f[n]]);
+						var num;
+						if(!d[$_THIS.dataOptions.f[n]]) num=0.1;
+						else num=d[$_THIS.dataOptions.f[n]];
+						return 20*num;
+					})
+					.attr('fill', "rgb(178,106,255)");
+				d3.select("#graphs").select("svg")
+					.append("text")
+					.attr("class", "text for bars")
+					//.attr("text-anchor", "end")
+					.attr("transform", "translate("+(mouse_click[0]-100+n*50)+"," + (mouse_click[1]-24) + ") rotate(-30)")
+					.attr("x", 0)//mouse_click[0]-100+n*50)
+					.attr("y", 0)//mouse_click[1]-32)
+					.attr("font-size",15)
+					.text(function(){
+						return $_THIS.dataOptions.f[n];
+					});
+					//.attr("transform", "rotate(0)");//12/07
+			}//draw bar chart end /12/07
+			d3.select("#graphs").select("svg") //close button
+				.append('line')
+				.attr("class","closed")
+				.attr('x1', mouse_click[0]+218)
+				.attr('y1', mouse_click[1]-217.5)
+				.attr('x2', mouse_click[0]+227)
+				.attr('y2', mouse_click[1]-208.5)
+				.attr('stroke', "black");
+			d3.select("#graphs").select("svg") //close button
+				.append('line')
+				.attr("class","closed")
+				.attr('x1', mouse_click[0]+218)
+				.attr('y1', mouse_click[1]-208.5)
+				.attr('x2', mouse_click[0]+227)
+				.attr('y2', mouse_click[1]-217.5)
+				.attr("stroke","black");
+			 //d3.select('#debug').text(JSON.stringify(d,undefined, 2));
+			 }
+		);//triangles added
+
 
 		function genLinks(d) {
 			var links = [];
