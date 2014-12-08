@@ -15,14 +15,63 @@ var drawViz = function(error, data){
 	var fbVizObj = new fbViz();
 	console.log(data);
 	var dataTmp = {};
-	var formatDateTime = d3.time.format('%m/%d/%Y');
+	var formatDateTime = d3.time.format('%m/%d/%Y %H:%M:%S');
+	var dOpts = new dataOptions();
+	dOpts.time_formatter = formatDateTime;
 	data.forEach(function(d) {
 		// body...
 		if(!(d["user"] in dataTmp)){
-			dataTmp[d["user"]] = {"children": [], "user": d["user"], "first_post": d["published_date"]};
+			dataTmp[d["user"]] = {
+			 "children": [],
+			 "user": d["user"],
+			 "first_post": new Date(),
+			 "Total Retweets": 0,
+			 "Total Tweets": 0,
+			 "Sentiments" : {"positive": 0, "neutral": 0, "negative": 0},
+			 "Total Sentiment": 0,
+			 "Overall Sentiment": "neutral",
+			 "Twitter Followers": +d["Twitter Followers"]
+			}
 		}
-		dataTmp;
+		var tObj = {
+			"text": d["tweet_text"],
+			"time": formatDateTime.parse(d["published_date"]),
+			"c_url": +d["c_url"],
+			"c_hash": +d["c_hash"],
+			"c_mention": +d["c_mention"],
+			"Twitter Retweets": +d["Twitter Retweets"],
+			"Twitter Reply Count": +d["Twitter Reply Count"],
+			"sentiment": d["sentiment"]
+		}
+		dataTmp[d["user"]]["children"].push(tObj);
+		dataTmp[d["user"]]["Total Retweets"] += tObj["Twitter Retweets"];
+		dataTmp[d["user"]]["Total Tweets"] += 1;
+		dataTmp[d["user"]]["first_post"] = d3.min(
+			[dataTmp[d["user"]]["first_post"], tObj["time"]]);
+		var t_sent = 0;
+		if(tObj["sentiment"] == "positive"){
+			t_sent = 1;
+		} else if(tObj["sentiment"] == "negative"){
+			t_sent = -1;
+		}
+		dataTmp[d["user"]]["Total Sentiment"] += t_sent;
+		if(t_sent > 0){
+			dataTmp[d["user"]]["Overall Sentiment"] = "positive";
+		} else if(t_sent < 0){
+			dataTmp[d["user"]]["Overall Sentiment"] = "negative";
+		}
+
+		dataTmp[d["user"]]["Sentiments"][tObj["sentiment"]] += 1;
+		console.log(tObj);
 	});
+	var data_Arr = [];
+	console.log(dataTmp);
+	$.each(dataTmp, function(e){
+		data_Arr.push(dataTmp[e]);
+	});
+	console.log(data_Arr);
+	data = data_Arr;
+
 	fbVizObj.init(data, {
 			margin: margin,
 			width: width,
@@ -32,9 +81,10 @@ var drawViz = function(error, data){
 		{
 			margin: margin2,
 			height: height2
-		}, uids);
+		}, uids, dOpts);
 	fbVizObj.drawChart();
 	fObj = fbVizObj;
+
 };
 
 d3.tsv(filename, drawViz);

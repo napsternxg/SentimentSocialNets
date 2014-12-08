@@ -63,13 +63,16 @@ line.edge {
 	stroke-width: 1px;
 	opacity: 1;
 }
-.plots > circle.posts.status {
-	fill: #004358;
+.plots > circle.posts.positive {
+	fill: green;
+}
+.plots > circle.posts.negative {
+	fill: red;
+}
+.plots > circle.posts.neutral {
+	fill: blue;
 }
 
-.plots > circle.posts.others {
-	fill: #B8C000;
-}
 
 .plots > circle.posts.highlight {
 	fill: #d7191c;
@@ -81,6 +84,16 @@ line.edge {
 
 .plots > circle.comment{
 	fill: #01B1E9;
+}
+
+.plots > circle.comment.positive{
+	fill: green;
+}
+.plots > circle.comment.negative{
+	fill: red;
+}
+.plots > circle.comment.neutral{
+	fill: blue;
 }
 
 .plots > circle.comment.highlight{
