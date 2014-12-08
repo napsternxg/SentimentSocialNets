@@ -4,8 +4,17 @@ div#graphs {
     border-radius: 10px;
 }
 
+h2{
+	color:black;
+	font-size: 34px;
+	/*font-family: sans-serif;*/
+}
+
 svg{
-	width: 100%;
+	position: absolute;
+	float: left;
+    left: 9%;
+	width: 82%;
 	height: 500px;
   background-color: #C0C0C0;
   border-radius: 10px;
@@ -121,7 +130,11 @@ text.date_tick{
 
 
 div#controls {
-width: 90%;
+position: absolute;
+float: left;
+top: 430pt;
+left: 9%;
+width: 60%;
 margin: auto;
 padding: 10px;
 }
