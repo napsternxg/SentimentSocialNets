@@ -501,7 +501,7 @@ var fbViz = function () {
 			}
 
 			debugDiv.html('<div class="debug post"><p><strong>' + likeText + d.from.name + ':</strong>' + d.message + commentList + '</p></div>');*/
-			debugDiv.html('<pre>'+JSON.stringify(d, undefined, 2)+'</pre>');
+			debugDiv.html('<pre style=\"position:absolute; top: 650; left: 140;\">'+JSON.stringify(d, undefined, 2)+'</pre>');
 		}
 		this.posts.append('circle') // Adds a dot per post
 		.attr("data-legend", function (d) {
@@ -615,6 +615,7 @@ var fbViz = function () {
 			  		d3.select("#closed").remove(); 
 			  		d3.selectAll(".bars").remove(); 
 			  		d3.selectAll(".text for bars").remove(); 
+			  		d3.selectAll(".label for bars").remove(); 
 			  		d3.selectAll(".closed").remove(); 
 					d3.select("#feature").remove();
 				});
@@ -650,6 +651,23 @@ var fbViz = function () {
 					.attr("font-size",15)
 					.text(function(){
 						return $_THIS.dataOptions.f[n];
+					});
+				d3.select("#graphs").select("svg")
+					.append("text")
+					.attr("class", "label for bars")
+					.attr("x", mouse_click[0]-80+n*50)//mouse_click[0]-100+n*50)
+					.attr('y', function(){
+						var num;
+						if(!d[$_THIS.dataOptions.f[n]]) num=0.1;
+						else num=d[$_THIS.dataOptions.f[n]];
+						return mouse_click[1]-63-20*num;
+						})
+					.attr("font-size",15)
+					.text(function(){
+						var num;
+						if(!d[$_THIS.dataOptions.f[n]]) num=0;
+						else num=d[$_THIS.dataOptions.f[n]];
+						return num;
 					});
 					//.attr("transform", "rotate(0)");//12/07
 			}//draw bar chart end /12/07
