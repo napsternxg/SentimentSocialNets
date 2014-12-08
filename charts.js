@@ -62,10 +62,10 @@ var drawViz = function(error, data){
 		}
 
 		dataTmp[d["user"]]["Sentiments"][tObj["sentiment"]] += 1;
-		console.log(tObj);
+		//console.log(tObj);
 	});
 	var data_Arr = [];
-	console.log(dataTmp);
+	//console.log(dataTmp);
 	$.each(dataTmp, function(e){
 		data_Arr.push(dataTmp[e]);
 	});

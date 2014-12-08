@@ -94,7 +94,7 @@ var fbViz = function () {
 				d.comments_size = d[$_THIS.dataOptions.user_size];
 				d.like_size = d[$_THIS.dataOptions.user_height];
 			}
-			console.log("Before Parse: "+$_THIS.dataOptions);
+			//console.log("Before Parse: "+$_THIS.dataOptions);
 			d.created_at = d[$_THIS.dataOptions.user_time];
 			if (!(d[$_THIS.dataOptions.user_name]in $_THIS.users)) {
 				$_THIS.users[d[$_THIS.dataOptions.user_name]] = {
@@ -309,7 +309,7 @@ var fbViz = function () {
 		.attr("dx", "-10px")
 		.attr("dy", "0")
 		.attr("class", function (d) {
-			console.log(d);
+			//console.log(d);
 			return "date_tick " + formatDay(d);
 		})
 		.attr("transform", function (d) {
