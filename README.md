@@ -6,6 +6,11 @@ Sentiment based social networks
 
 Rename `data_file.js.sample` to `data_file.js` and update your data file name in it.
 
+Authors
+-------
+Shubhanshu Mishra - @napsternxg - Majority of the the framework
+Jingxian Zhang - @JingxianZhang - Support for slider and zooming in. 
+
 License
 ---------
 
